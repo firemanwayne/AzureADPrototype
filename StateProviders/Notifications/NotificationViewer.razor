@@ -1,0 +1,79 @@
+﻿
+@if (State != null)
+{
+<h4>Messages: </h4>
+@if(State.RecieveMessages)
+{
+<button type="button" @onclick="StopMessages" class="btn btn-danger">Stop Messages</button>
+}
+else
+{
+    <button type="button" @onclick="StartMessages" class="btn btn-success">Start Messages</button>
+}
+
+
+
+<ul>
+    @foreach (var item in State.Messages)
+    {
+        <li @key="item">
+            <div>
+                Id: @item.MessageId
+            </div>
+            <div>
+                Subject: @item.Subject
+            </div>
+            <div>
+                Created: @item.Create.ToShortTimeString()
+            </div>
+            <div>
+                Content: @item.Content
+            </div>
+        </li>
+    }
+</ul>
+}
+
+
+@code {
+    [Inject]
+    public NotificationState State { get; set; }
+
+    [Inject]
+    protected ITestClient TestClient { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+            State.PropertyChanged += PropertyChanged;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void PropertyChanged(object o, System.ComponentModel.PropertyChangedEventArgs a)
+    {        
+        StateChanged();
+    }
+
+    private Task StateChanged() => InvokeAsync(() => StateHasChanged());
+
+    private void StopMessages()
+    {
+        State.StopMessages();
+
+        TestClient.Cancel();
+        StateChanged();
+    }
+    private void StartMessages()
+    {
+        State.StartMessages();
+        TestClient.Restart();
+        StateChanged();
+    }
+}
